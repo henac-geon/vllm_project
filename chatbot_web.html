@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <!-- 문자 인코딩을 UTF-8로 설정 -->
+    <meta charset="UTF-8">
+    <!-- 반응형 웹 디자인을 위한 뷰포트 설정 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 페이지 제목 -->
+    <title>Multi-User Chatbot System</title>
+    <style>
+        /* 전체 페이지 기본 스타일 설정 */
+        * {
+            /* 박스 크기 계산 방식을 border-box로 설정 */
+            box-sizing: border-box;
+            /* 기본 마진 제거 */
+            margin: 0;
+            /* 기본 패딩 제거 */
+            padding: 0;
+        }
+
+        /* body 요소 스타일 */
+        body {
+            /* 폰트 설정 */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            /* 배경색을 연한 회색으로 설정 */
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            /* 최소 높이를 화면 전체로 설정 */
+            min-height: 100vh;
+            /* flexbox 레이아웃 사용 */
+            display: flex;
+            /* 세로 방향으로 중앙 정렬 */
+            align-items: center;
+            /* 가로 방향으로 중앙 정렬 */
+            justify-content: center;
+            /* 상하 패딩 20px */
+            padding: 20px;
+        }
+
+        /* 채팅 컨테이너 스타일 */
+        .chat-container {
+            /* 흰색 배경 */
+            background: white;
+            /* 모서리를 둥글게 */
+            border-radius: 15px;
+            /* 그림자 효과 */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            /* 최대 너비 800px */
+            max-width: 800px;
+            /* 전체 너비 사용 */
+            width: 100%;
+            /* 높이 90vh */
+            height: 90vh;
+            /* flexbox 레이아웃 */
+            display: flex;
+            /* 세로 방향으로 배치 */
+            flex-direction: column;
+            /* 내용이 넘치면 숨김 */
+            overflow: hidden;
+        }
+
+        /* 헤더 스타일 */
+        .chat-header {
+            /* 그라데이션 배경 */
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            /* 흰색 텍스트 */
+            color: white;
+            /* 패딩 20px */
+            padding: 20px;
+            /* 텍스트 중앙 정렬 */
+            text-align: center;
+            /* 하단 그림자 */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 헤더 제목 스타일 */
+        .chat-header h1 {
+            /* 폰트 크기 24px */
+            font-size: 24px;
+            /* 하단 마진 5px */
+            margin-bottom: 5px;
+        }
+
+        /* 세션 정보 스타일 */
+        .session-info {
+            /* 폰트 크기 12px */
+            font-size: 12px;
+            /* 불투명도 90% */
+            opacity: 0.9;
+        }
+
+        /* 채팅 메시지 영역 스타일 */
+        .chat-messages {
+            /* 남은 공간 모두 차지 */
+            flex: 1;
+            /* 세로 스크롤 자동 */
+            overflow-y: auto;
+            /* 패딩 20px */
+            padding: 20px;
+            /* 배경색 연한 회색 */
+            background: #f5f5f5;
+        }
+
+        /* 메시지 스타일 */
+        .message {
+            /* 하단 마진 15px */
+            margin-bottom: 15px;
+            /* flexbox 레이아웃 */
+            display: flex;
+            /* 애니메이션 효과 */
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        /* 페이드인 애니메이션 정의 */
+        @keyframes fadeIn {
+            from {
+                /* 시작 시 불투명도 0 */
+                opacity: 0;
+                /* 시작 시 아래에서 위로 10px 이동 */
+                transform: translateY(10px);
+            }
+            to {
+                /* 종료 시 불투명도 1 */
+                opacity: 1;
+                /* 종료 시 원래 위치 */
+                transform: translateY(0);
+            }
+        }
+
+        /* 사용자 메시지 스타일 */
+        .message.user {
+            /* 오른쪽 정렬 */
+            justify-content: flex-end;
+        }
+
+        /* 메시지 내용 스타일 */
+        .message-content {
+            /* 최대 너비 70% */
+            max-width: 70%;
+            /* 패딩 12px */
+            padding: 12px 16px;
+            /* 모서리 둥글게 */
+            border-radius: 18px;
+            /* 단어 줄바꿈 */
+            word-wrap: break-word;
+        }
+
+        /* 사용자 메시지 내용 스타일 */
+        .message.user .message-content {
+            /* 파란색 배경 */
+            background: #667eea;
+            /* 흰색 텍스트 */
+            color: white;
+            /* 오른쪽 하단 모서리만 둥글게 하지 않음 */
+            border-bottom-right-radius: 4px;
+        }
+
+        /* 어시스턴트 메시지 내용 스타일 */
+        .message.assistant .message-content {
+            /* 회색 배경 */
+            background: #e9ecef;
+            /* 검은색 텍스트 */
+            color: #333;
+            /* 왼쪽 하단 모서리만 둥글게 하지 않음 */
+            border-bottom-left-radius: 4px;
+        }
+
+        /* 시스템 메시지 스타일 */
+        .message.system {
+            /* 중앙 정렬 */
+            justify-content: center;
+        }
+
+        /* 시스템 메시지 내용 스타일 */
+        .message.system .message-content {
+            /* 연한 노란색 배경 */
+            background: #fff3cd;
+            /* 갈색 텍스트 */
+            color: #856404;
+            /* 폰트 크기 작게 */
+            font-size: 12px;
+            /* 이탤릭체 */
+            font-style: italic;
+        }
+
+        /* 타이핑 중 표시 스타일 */
+        .typing {
+            /* 회색 배경 */
+            background: #e9ecef;
+            /* 패딩 */
+            padding: 12px 16px;
+            /* 모서리 둥글게 */
+            border-radius: 18px;
+            /* 인라인 블록 */
+            display: inline-block;
+        }
+
+        /* 타이핑 애니메이션을 위한 점 스타일 */
+        .typing span {
+            /* 높이 8px, 너비 8px의 원 */
+            height: 8px;
+            width: 8px;
+            /* 회색 배경 */
+            background-color: #999;
+            /* 원형으로 */
+            border-radius: 50%;
+            /* 인라인 블록 */
+            display: inline-block;
+            /* 오른쪽 마진 */
+            margin-right: 5px;
+            /* 맥박 애니메이션 */
+            animation: pulse 1.4s infinite ease-in-out;
+        }
+
+        /* 각 점의 애니메이션 딜레이 설정 */
+        .typing span:nth-child(1) { animation-delay: 0s; }
+        .typing span:nth-child(2) { animation-delay: 0.2s; }
+        .typing span:nth-child(3) { animation-delay: 0.4s; }
+
+        /* 맥박 애니메이션 정의 */
+        @keyframes pulse {
+            0%, 60%, 100% {
+                /* 불투명도 0.4 */
+                opacity: 0.4;
+                /* 크기 1배 */
+                transform: scale(1);
+            }
+            30% {
+                /* 불투명도 1 */
+                opacity: 1;
+                /* 크기 1.2배 */
+                transform: scale(1.2);
+            }
+        }
+
+        /* 입력 영역 스타일 */
+        .chat-input {
+            /* 패딩 20px */
+            padding: 20px;
+            /* 흰색 배경 */
+            background: white;
+            /* 상단 테두리 */
+            border-top: 1px solid #dee2e6;
+            /* flexbox 레이아웃 */
+            display: flex;
+            /* 간격 10px */
+            gap: 10px;
+        }
+
+        /* 입력 필드 스타일 */
+        .chat-input input {
+            /* 남은 공간 모두 차지 */
+            flex: 1;
+            /* 패딩 12px */
+            padding: 12px 16px;
+            /* 테두리 */
+            border: 2px solid #dee2e6;
+            /* 모서리 둥글게 */
+            border-radius: 25px;
+            /* 아웃라인 제거 */
+            outline: none;
+            /* 폰트 크기 */
+            font-size: 14px;
+            /* 전환 효과 */
+            transition: border-color 0.3s;
+        }
+
+        /* 입력 필드 포커스 시 스타일 */
+        .chat-input input:focus {
+            /* 테두리 색상 변경 */
+            border-color: #667eea;
+        }
+
+        /* 버튼 스타일 */
+        .chat-input button {
+            /* 패딩 */
+            padding: 12px 24px;
+            /* 그라데이션 배경 */
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            /* 흰색 텍스트 */
+            color: white;
+            /* 테두리 제거 */
+            border: none;
+            /* 모서리 둥글게 */
+            border-radius: 25px;
+            /* 커서 포인터 */
+            cursor: pointer;
+            /* 폰트 두껍게 */
+            font-weight: bold;
+            /* 전환 효과 */
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        /* 버튼 호버 시 스타일 */
+        .chat-input button:hover {
+            /* 약간 확대 */
+            transform: scale(1.05);
+            /* 그림자 효과 */
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        /* 버튼 비활성화 시 스타일 */
+        .chat-input button:disabled {
+            /* 불투명도 감소 */
+            opacity: 0.6;
+            /* 커서 기본 */
+            cursor: not-allowed;
+            /* 확대 효과 제거 */
+            transform: scale(1);
+        }
+
+        /* 연결 상태 표시 스타일 */
+        .connection-status {
+            /* 패딩 10px */
+            padding: 10px;
+            /* 텍스트 중앙 정렬 */
+            text-align: center;
+            /* 폰트 크기 작게 */
+            font-size: 12px;
+            /* 두껍게 */
+            font-weight: bold;
+        }
+
+        /* 연결됨 상태 스타일 */
+        .connection-status.connected {
+            /* 초록색 배경 */
+            background: #d4edda;
+            /* 진한 초록색 텍스트 */
+            color: #155724;
+        }
+
+        /* 연결 끊김 상태 스타일 */
+        .connection-status.disconnected {
+            /* 빨간색 배경 */
+            background: #f8d7da;
+            /* 진한 빨간색 텍스트 */
+            color: #721c24;
+        }
+
+        /* 반응형 디자인 - 작은 화면용 */
+        @media (max-width: 768px) {
+            /* 컨테이너 높이 조정 */
+            .chat-container {
+                height: 100vh;
+                border-radius: 0;
+            }
+
+            /* 메시지 최대 너비 조정 */
+            .message-content {
+                max-width: 85%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 채팅 컨테이너 -->
+    <div class="chat-container">
+        <!-- 채팅 헤더 -->
+        <div class="chat-header">
+            <h1>烙 AI Chatbot</h1>
+            <div class="session-info">Session ID: <span id="sessionId">Connecting...</span></div>
+        </div>
+
+        <!-- 연결 상태 표시 -->
+        <div class="connection-status disconnected" id="connectionStatus">
+            Disconnected
+        </div>
+
+        <!-- 채팅 메시지 영역 -->
+        <div class="chat-messages" id="chatMessages">
+            <!-- 메시지가 여기에 추가됨 -->
+        </div>
+
+        <!-- 입력 영역 -->
+        <div class="chat-input">
+            <input
+                type="text"
+                id="messageInput"
+                placeholder="메시지를 입력하세요..."
+                disabled
+            >
+            <button id="sendButton" disabled>전송</button>
+        </div>
+    </div>
+
+    <script>
+        // WebSocket 연결 변수
+        let ws = null;
+        // 현재 세션 ID
+        let sessionId = null;
+        // 재연결 시도 횟수
+        let reconnectAttempts = 0;
+        // 최대 재연결 시도 횟수
+        const MAX_RECONNECT_ATTEMPTS = 5;
+
+        // DOM 요소 참조
+        const chatMessages = document.getElementById('chatMessages');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const sessionIdDisplay = document.getElementById('sessionId');
+        const connectionStatus = document.getElementById('connectionStatus');
+
+        // 페이지 로드 시 실행
+        document.addEventListener('DOMContentLoaded', () => {
+            // 새 세션 생성
+            createSession();
+        });
+
+        // 새 세션을 생성하는 함수
+        async function createSession() {
+            try {
+                // API 서버에 세션 생성 요청
+                const response = await fetch('http://localhost:8080/session/create', {
+                    method: 'POST'
+                });
+                // JSON 응답 파싱
+                const data = await response.json();
+                // 세션 ID 저장
+                sessionId = data.session_id;
+                // 화면에 세션 ID 표시
+                sessionIdDisplay.textContent = sessionId;
+                // WebSocket 연결
+                connectWebSocket();
+            } catch (error) {
+                // 에러 발생 시 콘솔에 출력
+                console.error('Failed to create session:', error);
+                // 시스템 메시지 표시
+                addMessage('system', '세션 생성에 실패했습니다. 페이지를 새로고침해주세요.');
+            }
+        }
+
+        // WebSocket 연결을 설정하는 함수
+        function connectWebSocket() {
+            // WebSocket 연결 생성
+            ws = new WebSocket(`ws://localhost:8080/ws/${sessionId}`);
+
+            // WebSocket 연결 성공 시
+            ws.onopen = () => {
+                console.log('WebSocket connected');
+                // 재연결 시도 횟수 초기화
+                reconnectAttempts = 0;
+                // 연결 상태 업데이트
+                updateConnectionStatus(true);
+                // 입력 필드 활성화
+                messageInput.disabled = false;
+                sendButton.disabled = false;
+                // 입력 필드에 포커스
+                messageInput.focus();
+                // 환영 메시지 표시
+                addMessage('system', '채팅에 연결되었습니다. 메시지를 입력해주세요.');
+            };
+
+            // 메시지 수신 시
+            ws.onmessage = (event) => {
+                // JSON 데이터 파싱
+                const data = JSON.parse(event.data);
+
+                // 메시지 타입에 따라 처리
+                if (data.type === 'connection') {
+                    // 연결 메시지
+                    console.log(data.message);
+                } else if (data.type === 'typing') {
+                    // 타이핑 표시
+                    showTyping();
+                } else if (data.type === 'message') {
+                    // 타이핑 표시 제거
+                    removeTyping();
+                    // AI 응답 메시지 추가
+                    addMessage('assistant', data.content);
+                } else if (data.type === 'error') {
+                    // 타이핑 표시 제거
+                    removeTyping();
+                    // 에러 메시지 표시
+                    addMessage('system', '에러: ' + data.message);
+                }
+            };
+
+            // WebSocket 연결 종료 시
+            ws.onclose = () => {
+                console.log('WebSocket disconnected');
+                // 연결 상태 업데이트
+                updateConnectionStatus(false);
+                // 입력 필드 비활성화
+                messageInput.disabled = true;
+                sendButton.disabled = true;
+                // 재연결 시도
+                attemptReconnect();
+            };
+
+            // WebSocket 에러 발생 시
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                // 에러 메시지 표시
+                addMessage('system', '연결 에러가 발생했습니다.');
+            };
+        }
+
+        // 재연결을 시도하는 함수
+        function attemptReconnect() {
+            // 최대 시도 횟수 초과 시
+            if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+                addMessage('system', '재연결에 실패했습니다. 페이지를 새로고침해주세요.');
+                return;
+            }
+
+            // 재연결 시도 횟수 증가
+            reconnectAttempts++;
+            // 메시지 표시
+            addMessage('system', `재연결 시도 중... (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`);
+            // 3초 후 재연결 시도
+            setTimeout(() => {
+                connectWebSocket();
+            }, 3000);
+        }
+
+        // 연결 상태를 업데이트하는 함수
+        function updateConnectionStatus(connected) {
+            // 연결됨 상태
+            if (connected) {
+                connectionStatus.textContent = 'Connected';
+                connectionStatus.className = 'connection-status connected';
+            }
+            // 연결 끊김 상태
+            else {
+                connectionStatus.textContent = 'Disconnected';
+                connectionStatus.className = 'connection-status disconnected';
+            }
+        }
+
+        // 메시지를 추가하는 함수
+        function addMessage(role, content) {
+            // 메시지 div 생성
+            const messageDiv = document.createElement('div');
+            // 메시지 클래스 추가
+            messageDiv.className = `message ${role}`;
+
+            // 메시지 내용 div 생성
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            // 텍스트 내용 설정
+            contentDiv.textContent = content;
+
+            // 메시지에 내용 추가
+            messageDiv.appendChild(contentDiv);
+            // 채팅 메시지 영역에 추가
+            chatMessages.appendChild(messageDiv);
+            // 스크롤을 맨 아래로 이동
+            scrollToBottom();
+        }
+
+        // 타이핑 표시를 보여주는 함수
+        function showTyping() {
+            // 타이핑 div 생성
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message assistant';
+            typingDiv.id = 'typing-indicator';
+
+            // 타이핑 애니메이션 HTML
+            const typingContent = document.createElement('div');
+            typingContent.className = 'typing';
+            typingContent.innerHTML = '<span></span><span></span><span></span>';
+
+            // 타이핑 표시 추가
+            typingDiv.appendChild(typingContent);
+            chatMessages.appendChild(typingDiv);
+            // 스크롤 이동
+            scrollToBottom();
+        }
+
+        // 타이핑 표시를 제거하는 함수
+        function removeTyping() {
+            // 타이핑 표시 요소 찾기
+            const typingIndicator = document.getElementById('typing-indicator');
+            // 존재하면 제거
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+
+        // 스크롤을 맨 아래로 이동하는 함수
+        function scrollToBottom() {
+            // 부드럽게 스크롤
+            chatMessages.scrollTo({
+                top: chatMessages.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+
+        // 메시지를 전송하는 함수
+        function sendMessage() {
+            // 입력된 메시지 가져오기 (양쪽 공백 제거)
+            const message = messageInput.value.trim();
+
+            // 메시지가 비어있거나 WebSocket이 연결되지 않았으면 리턴
+            if (!message || !ws || ws.readyState !== WebSocket.OPEN) {
+                return;
+            }
+
+            // 사용자 메시지 화면에 추가
+            addMessage('user', message);
+            // WebSocket으로 메시지 전송
+            ws.send(JSON.stringify({ message: message }));
+            // 입력 필드 초기화
+            messageInput.value = '';
+            // 입력 필드에 포커스
+            messageInput.focus();
+        }
+
+        // 전송 버튼 클릭 이벤트
+        sendButton.addEventListener('click', sendMessage);
+
+        // Enter 키 입력 이벤트
+        messageInput.addEventListener('keypress', (e) => {
+            // Enter 키를 누르면 메시지 전송
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // 페이지 종료 시 WebSocket 연결 종료
+        window.addEventListener('beforeunload', () => {
+            if (ws) {
+                ws.close();
+            }
+        });
+    </script>
+</body>
+</html>
