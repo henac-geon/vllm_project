@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<!-- HTML5 문서 타입 선언 -->
+<html lang="ko">
+<!-- HTML 시작 태그, 언어를 한국어로 설정 -->
+<head>
+    <!-- 문자 인코딩을 UTF-8로 설정 (한글 등 다국어 지원) -->
+    <meta charset="UTF-8">
+    <!-- 반응형 웹 디자인을 위한 뷰포트 설정 (모바일 대응) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 브라우저 탭에 표시될 페이지 제목 -->
+    <title>통합 AI 챗봇 시스템</title>
+    <!-- CSS 스타일 시작 -->
+    <style>
+        /* 모든 요소(*) 기본 스타일 초기화 */
+        * {
+            margin: 0;              /* 모든 요소의 외부 여백 제거 */
+            padding: 0;             /* 모든 요소의 내부 여백 제거 */
+            box-sizing: border-box; /* 패딩과 테두리를 요소 크기에 포함 */
+        }
+
+        /* body 요소 스타일 - 페이지 전체 배경 및 레이아웃 */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* 폰트 패밀리 설정 */
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* 그라데이션 배경 (보라-파랑) */
+            min-height: 100vh;      /* 최소 높이를 화면 전체 높이로 설정 */
+            display: flex;          /* flexbox 레이아웃 사용 */
+            justify-content: center;/* 가로 중앙 정렬 */
+            align-items: center;    /* 세로 중앙 정렬 */
+            padding: 20px;          /* 전체 여백 20px */
+        }
+
+        /* 채팅 컨테이너 - 메인 채팅 영역 */
+        .container {
+            background: white;      /* 흰색 배경 */
+            border-radius: 20px;    /* 둥근 모서리 20px */
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); /* 그림자 효과 */
+            max-width: 900px;       /* 최대 너비 900px */
+            width: 100%;            /* 너비 100% (부모 요소 기준) */
+            height: 90vh;           /* 높이 90% 뷰포트 */
+            display: flex;          /* flexbox 레이아웃 */
+            flex-direction: column; /* 세로 방향 배치 */
+            overflow: hidden;       /* 넘치는 콘텐츠 숨김 */
+        }
+
+        /* 헤더 영역 - 타이틀과 설명 */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* 그라데이션 배경 */
+            color: white;           /* 흰색 텍스트 */
+            padding: 25px;          /* 내부 여백 25px */
+            text-align: center;     /* 텍스트 중앙 정렬 */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* 하단 그림자 */
+        }
+
+        /* 헤더 제목(h1) 스타일 */
+        .header h1 {
+            font-size: 28px;        /* 폰트 크기 28px */
+            margin-bottom: 8px;     /* 하단 여백 8px */
+        }
+
+        /* 헤더 설명(p) 스타일 */
+        .header p {
+            font-size: 14px;        /* 폰트 크기 14px */
+            opacity: 0.9;           /* 불투명도 90% (약간 투명) */
+        }
+
+        /* 상태 표시 바 - 연결 상태 및 서버 정보 */
+        .status-bar {
+            background: #f8f9fa;    /* 연한 회색 배경 */
+            padding: 12px 25px;     /* 상하 12px, 좌우 25px 여백 */
+            border-bottom: 1px solid #e0e0e0; /* 하단 테두리 */
+            display: flex;          /* flexbox 레이아웃 */
+            justify-content: space-between; /* 양쪽 끝 정렬 */
+            align-items: center;    /* 세로 중앙 정렬 */
+            font-size: 13px;        /* 폰트 크기 13px */
+        }
+
+        /* 상태 인디케이터 - 점과 텍스트 그룹 */
+        .status-indicator {
+            display: flex;          /* flexbox 레이아웃 */
+            align-items: center;    /* 세로 중앙 정렬 */
+            gap: 8px;               /* 요소 간 간격 8px */
+        }
+
+        /* 상태 점 - 연결 상태 표시 */
+        .status-dot {
+            width: 10px;            /* 너비 10px */
+            height: 10px;           /* 높이 10px */
+            border-radius: 50%;     /* 원형 (50% 둥글게) */
+            background: #ccc;       /* 회색 배경 (기본 오프라인 상태) */
+        }
+
+        /* 온라인 상태 점 - 초록색 */
+        .status-dot.online {
+            background: #4caf50;    /* 초록색 배경 */
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5); /* 초록색 발광 효과 */
+        }
+
+        /* 비전 온라인 상태 점 - 파란색 (미사용, 예비용) */
+        .status-dot.vl-online {
+            background: #2196f3;    /* 파란색 배경 */
+            box-shadow: 0 0 10px rgba(33, 150, 243, 0.5); /* 파란색 발광 효과 */
+        }
+
+        /* 채팅 영역 - 메시지가 표시되는 스크롤 가능한 영역 */
+        .chat-area {
+            flex: 1;                /* 남은 공간 모두 차지 */
+            overflow-y: auto;       /* 세로 스크롤 활성화 */
+            padding: 25px;          /* 내부 여백 25px */
+            background: #f5f5f5;    /* 연한 회색 배경 */
+        }
+
+        /* 메시지 컨테이너 - 각 메시지의 기본 스타일 */
+        .message {
+            margin-bottom: 20px;    /* 메시지 간 하단 여백 20px */
+            display: flex;          /* flexbox 레이아웃 */
+            gap: 12px;              /* 아바타와 메시지 간 간격 12px */
+            animation: slideIn 0.3s ease-out; /* 슬라이드 인 애니메이션 */
+        }
+
+        /* 슬라이드 인 애니메이션 정의 */
+        @keyframes slideIn {
+            from {
+                opacity: 0;         /* 시작: 투명 */
+                transform: translateY(10px); /* 시작: 아래에서 10px 위치 */
+            }
+            to {
+                opacity: 1;         /* 종료: 불투명 */
+                transform: translateY(0); /* 종료: 원래 위치 */
+            }
+        }
+
+        /* 사용자 메시지 - 오른쪽 정렬 */
+        .message.user {
+            flex-direction: row-reverse; /* 요소 순서 반대로 (오른쪽 정렬) */
+        }
+
+        /* 메시지 아바타 - 발신자 아이콘 */
+        .message-avatar {
+            width: 40px;            /* 너비 40px */
+            height: 40px;           /* 높이 40px */
+            border-radius: 50%;     /* 원형 */
+            display: flex;          /* flexbox 레이아웃 */
+            align-items: center;    /* 세로 중앙 정렬 */
+            justify-content: center;/* 가로 중앙 정렬 */
+            font-size: 20px;        /* 이모지 크기 20px */
+            flex-shrink: 0;         /* 크기 축소 방지 */
+        }
+
+        /* 사용자 아바타 배경 */
+        .message.user .message-avatar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* 보라 그라데이션 */
+        }
+
+        /* AI 어시스턴트 및 봇 아바타 배경 */
+        .message.assistant .message-avatar,
+        .message.bot .message-avatar {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); /* 핑크 그라데이션 */
+        }
+
+        /* 시스템 메시지 아바타 배경 */
+        .message.system .message-avatar {
+            background: #ffc107;    /* 노란색 배경 */
+        }
+
+        /* 메시지 콘텐츠 컨테이너 */
+        .message-content {
+            max-width: 70%;         /* 최대 너비 70% (화면 대비) */
+        }
+
+        /* 사용자 메시지 콘텐츠 - 오른쪽 정렬 */
+        .message.user .message-content {
+            text-align: right;      /* 텍스트 오른쪽 정렬 */
+        }
+
+        /* 메시지 말풍선 - 실제 텍스트가 들어가는 영역 */
+        .message-bubble {
+            padding: 12px 18px;     /* 상하 12px, 좌우 18px 여백 */
+            border-radius: 18px;    /* 둥근 모서리 18px */
+            word-wrap: break-word;  /* 긴 단어 줄바꿈 */
+            line-height: 1.5;       /* 줄 간격 1.5배 */
+        }
+
+        /* 사용자 메시지 말풍선 스타일 */
+        .message.user .message-bubble {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* 보라 그라데이션 */
+            color: white;           /* 흰색 텍스트 */
+            border-bottom-right-radius: 4px; /* 오른쪽 하단 모서리 덜 둥글게 (꼬리 효과) */
+        }
+
+        /* AI 어시스턴트 및 봇 메시지 말풍선 스타일 */
+        .message.assistant .message-bubble,
+        .message.bot .message-bubble {
+            background: white;      /* 흰색 배경 */
+            color: #333;            /* 어두운 회색 텍스트 */
+            border-bottom-left-radius: 4px; /* 왼쪽 하단 모서리 덜 둥글게 */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* 그림자 효과 */
+        }
+
+        /* 시스템 메시지 말풍선 스타일 */
+        .message.system .message-bubble {
+            background: #fff3cd;    /* 연한 노란색 배경 */
+            color: #856404;         /* 갈색 텍스트 */
+            font-size: 12px;        /* 작은 폰트 크기 */
+            font-style: italic;     /* 이탤릭체 */
+        }
+
+        /* 메시지 내 이미지 스타일 */
+        .message-image {
+            max-width: 100%;        /* 최대 너비 100% (부모 요소 기준) */
+            border-radius: 12px;    /* 둥근 모서리 12px */
+            margin-top: 8px;        /* 상단 여백 8px */
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); /* 그림자 효과 */
+        }
+
+        /* 메시지 시간 표시 */
+        .message-time {
+            font-size: 11px;        /* 작은 폰트 크기 */
+            color: #999;            /* 연한 회색 텍스트 */
+            margin-top: 5px;        /* 상단 여백 5px */
+        }
+
+        /* 서버 배지 - 어느 서버에서 응답했는지 표시 */
+        .server-badge {
+            display: inline-block;  /* 인라인 블록 요소 */
+            padding: 2px 8px;       /* 상하 2px, 좌우 8px 여백 */
+            border-radius: 10px;    /* 둥근 모서리 10px */
+            font-size: 10px;        /* 작은 폰트 크기 */
+            font-weight: bold;      /* 굵은 텍스트 */
+            margin-left: 5px;       /* 왼쪽 여백 5px */
+        }
+
+        /* 텍스트 서버 배지 스타일 */
+        .badge-text {
+            background: #667eea;    /* 보라색 배경 */
+            color: white;           /* 흰색 텍스트 */
+        }
+
+        /* 비전 서버 배지 스타일 */
+        .badge-vision {
+            background: #2196f3;    /* 파란색 배경 */
+            color: white;           /* 흰색 텍스트 */
+        }
+
+        /* 입력 영역 - 메시지 입력 및 설정 */
+        .input-area {
+            background: white;      /* 흰색 배경 */
+            padding: 20px 25px;     /* 상하 20px, 좌우 25px 여백 */
+            border-top: 1px solid #e0e0e0; /* 상단 테두리 */
+        }
+
+        /* 설정 영역 - Max Tokens, Temperature 등 */
+        .settings {
+            display: flex;          /* flexbox 레이아웃 */
+            gap: 15px;              /* 요소 간 간격 15px */
+            margin-bottom: 15px;    /* 하단 여백 15px */
+            font-size: 14px;        /* 폰트 크기 14px */
+        }
+
+        /* 설정 레이블 스타일 */
+        .settings label {
+            display: flex;          /* flexbox 레이아웃 */
+            align-items: center;    /* 세로 중앙 정렬 */
+            gap: 8px;               /* 레이블과 입력 간 간격 8px */
+        }
+
+        /* 설정 숫자 입력 필드 스타일 */
+        .settings input[type="number"] {
+            padding: 5px 10px;      /* 상하 5px, 좌우 10px 여백 */
+            border: 1px solid #e0e0e0; /* 테두리 */
+            border-radius: 8px;     /* 둥근 모서리 8px */
+            width: 80px;            /* 너비 80px */
+        }
+
+        /* 이미지 미리보기 영역 - 기본적으로 숨김 */
+        .image-preview {
+            display: none;          /* 숨김 */
+            margin-bottom: 15px;    /* 하단 여백 15px */
+        }
+
+        /* 이미지 미리보기 표시 상태 */
+        .image-preview.show {
+            display: block;         /* 보이기 */
+        }
+
+        /* 미리보기 컨테이너 - 이미지와 삭제 버튼 */
+        .preview-container {
+            position: relative;     /* 상대 위치 (자식 요소 절대 위치 기준) */
+            display: inline-block;  /* 인라인 블록 */
+        }
+
+        /* 미리보기 이미지 스타일 */
+        .preview-image {
+            max-width: 200px;       /* 최대 너비 200px */
+            max-height: 200px;      /* 최대 높이 200px */
+            border-radius: 12px;    /* 둥근 모서리 12px */
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); /* 그림자 효과 */
+        }
+
+        /* 이미지 제거 버튼 - 우측 상단 X 버튼 */
+        .remove-image {
+            position: absolute;     /* 절대 위치 */
+            top: -8px;              /* 상단에서 -8px (위로 벗어남) */
+            right: -8px;            /* 우측에서 -8px (오른쪽으로 벗어남) */
+            background: #f44336;    /* 빨간색 배경 */
+            color: white;           /* 흰색 텍스트 */
+            border: none;           /* 테두리 없음 */
+            border-radius: 50%;     /* 원형 */
+            width: 28px;            /* 너비 28px */
+            height: 28px;           /* 높이 28px */
+            cursor: pointer;        /* 마우스 포인터 커서 */
+            display: flex;          /* flexbox 레이아웃 */
+            align-items: center;    /* 세로 중앙 정렬 */
+            justify-content: center;/* 가로 중앙 정렬 */
+            font-size: 18px;        /* 폰트 크기 18px */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* 그림자 효과 */
+        }
+
+        /* 이미지 제거 버튼 호버 효과 */
+        .remove-image:hover {
+            background: #d32f2f;    /* 더 어두운 빨간색 */
+        }
+
+        /* 입력 컨트롤 영역 - 입력창과 전송 버튼 */
+        .input-controls {
+            display: flex;          /* flexbox 레이아웃 */
+            gap: 10px;              /* 요소 간 간격 10px */
+        }
+
+        /* 입력 래퍼 - 입력창과 파일 첨부 버튼 */
+        .input-wrapper {
+            flex: 1;                /* 남은 공간 모두 차지 */
+            position: relative;     /* 상대 위치 (첨부 버튼 절대 위치 기준) */
+        }
+
+        /* 메시지 입력 필드 */
+        #messageInput {
+            width: 100%;            /* 너비 100% */
+            padding: 14px 50px 14px 18px; /* 상하 14px, 우측 50px(버튼 공간), 좌측 18px */
+            border: 2px solid #e0e0e0; /* 테두리 */
+            border-radius: 25px;    /* 둥근 모서리 25px (pill 형태) */
+            font-size: 15px;        /* 폰트 크기 15px */
+            outline: none;          /* 포커스 시 기본 외곽선 제거 */
+            transition: border-color 0.3s; /* 테두리 색상 전환 애니메이션 */
+        }
+
+        /* 메시지 입력 필드 포커스 상태 */
+        #messageInput:focus {
+            border-color: #667eea;  /* 보라색 테두리 */
+        }
+
+        /* 파일 입력 레이블 - 클립 아이콘 */
+        .file-input-label {
+            position: absolute;     /* 절대 위치 */
+            right: 10px;            /* 우측에서 10px */
+            top: 50%;               /* 상단에서 50% */
+            transform: translateY(-50%); /* Y축 -50% 이동 (정확한 중앙) */
+            cursor: pointer;        /* 마우스 포인터 커서 */
+            font-size: 24px;        /* 폰트 크기 24px */
+            color: #667eea;         /* 보라색 */
+            transition: transform 0.2s; /* 변형 전환 애니메이션 */
+        }
+
+        /* 파일 입력 레이블 호버 효과 */
+        .file-input-label:hover {
+            transform: translateY(-50%) scale(1.1); /* 10% 확대 */
+        }
+
+        /* 파일 입력 필드 - 숨김 */
+        #imageInput {
+            display: none;          /* 숨김 (레이블로 대체) */
+        }
+
+        /* 전송 버튼 */
+        #sendButton {
+            padding: 14px 30px;     /* 상하 14px, 좌우 30px 여백 */
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* 그라데이션 배경 */
+            color: white;           /* 흰색 텍스트 */
+            border: none;           /* 테두리 없음 */
+            border-radius: 25px;    /* 둥근 모서리 25px */
+            cursor: pointer;        /* 마우스 포인터 커서 */
+            font-size: 15px;        /* 폰트 크기 15px */
+            font-weight: 600;       /* 굵은 텍스트 */
+            transition: transform 0.2s, box-shadow 0.2s; /* 변형 및 그림자 전환 애니메이션 */
+            min-width: 100px;       /* 최소 너비 100px */
+        }
+
+        /* 전송 버튼 호버 효과 (비활성화 상태 제외) */
+        #sendButton:hover:not(:disabled) {
+            transform: translateY(-2px); /* Y축 -2px 이동 (위로 살짝 이동) */
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); /* 그림자 효과 */
+        }
+
+        /* 전송 버튼 비활성화 상태 */
+        #sendButton:disabled {
+            background: #ccc;       /* 회색 배경 */
+            cursor: not-allowed;    /* 금지 커서 */
+        }
+
+        /* 타이핑 인디케이터 컨테이너 */
+        .typing {
+            display: inline-block;  /* 인라인 블록 */
+            padding: 12px 18px;     /* 상하 12px, 좌우 18px 여백 */
+            background: white;      /* 흰색 배경 */
+            border-radius: 18px;    /* 둥근 모서리 18px */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* 그림자 효과 */
+        }
+
+        /* 타이핑 점들 컨테이너 */
+        .typing-dots {
+            display: flex;          /* flexbox 레이아웃 */
+            gap: 5px;               /* 점 간 간격 5px */
+        }
+
+        /* 타이핑 점 - 애니메이션 점 */
+        .typing-dot {
+            width: 8px;             /* 너비 8px */
+            height: 8px;            /* 높이 8px */
+            border-radius: 50%;     /* 원형 */
+            background: #667eea;    /* 보라색 배경 */
+            animation: bounce 1.4s infinite ease-in-out; /* 바운스 애니메이션 */
+        }
+
+        /* 첫 번째 타이핑 점 애니메이션 딜레이 */
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        /* 두 번째 타이핑 점 애니메이션 딜레이 */
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        /* 바운스 애니메이션 정의 */
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); } /* 시작, 80%, 종료: 크기 0 */
+            40% { transform: scale(1); }           /* 40%: 원래 크기 */
+        }
+
+        /* 반응형 디자인 - 모바일 화면 (768px 이하) */
+        @media (max-width: 768px) {
+            /* 모바일에서 컨테이너 전체 화면 */
+            .container {
+                height: 100vh;      /* 높이 100% 뷰포트 */
+                border-radius: 0;   /* 모서리 둥글게 없앰 */
+            }
+
+            /* 모바일에서 메시지 콘텐츠 너비 증가 */
+            .message-content {
+                max-width: 85%;     /* 최대 너비 85% */
+            }
+
+            /* 모바일에서 설정 영역 세로 배치 */
+            .settings {
+                flex-direction: column; /* 세로 방향 배치 */
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 메인 컨테이너 -->
+    <div class="container">
+        <!-- 헤더 영역 -->
+        <div class="header">
+            <!-- 제목 -->
+            <h1>烙 통합 AI 챗봇 시스템</h1>
+            <!-- 설명 -->
+            <p>텍스트 채팅 & 이미지 분석 지원</p>
+        </div>
+
+        <!-- 상태 표시 바 -->
+        <div class="status-bar">
+            <!-- 전체 연결 상태 인디케이터 -->
+            <div class="status-indicator">
+                <!-- 상태 점 (온라인/오프라인) -->
+                <div class="status-dot" id="statusDot"></div>
+                <!-- 상태 텍스트 -->
+                <span id="statusText">연결 확인 중...</span>
+            </div>
+            <!-- 서버별 상태 배지 -->
+            <div>
+                <!-- 텍스트 서버 배지 -->
+                <span class="server-badge badge-text" id="textBadge">텍스트: 대기</span>
+                <!-- 비전 서버 배지 -->
+                <span class="server-badge badge-vision" id="visionBadge">비전: 대기</span>
+            </div>
+        </div>
+
+        <!-- 채팅 메시지 영역 -->
+        <div class="chat-area" id="chatArea">
+            <!-- 초기 시스템 메시지 -->
+            <div class="message system">
+                <!-- 시스템 아바타 -->
+                <div class="message-avatar">ℹ️</div>
+                <!-- 메시지 콘텐츠 -->
+                <div class="message-content">
+                    <!-- 메시지 말풍선 -->
+                    <div class="message-bubble">
+                        안녕하세요! 통합 AI 챗봇입니다.<br>
+                        • 텍스트만 입력 → 일반 챗봇 서버<br>
+                        • 이미지 + 텍스트 → 비전 AI 서버
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 입력 영역 -->
+        <div class="input-area">
+            <!-- 설정 영역 -->
+            <div class="settings">
+                <!-- Max Tokens 설정 -->
+                <label>
+                    Max Tokens:
+                    <!-- 숫자 입력: 기본값 256, 최소 32, 최대 2048, 증감 단위 32 -->
+                    <input type="number" id="maxTokens" value="256" min="32" max="2048" step="32">
+                </label>
+                <!-- Temperature 설정 -->
+                <label>
+                    Temperature:
+                    <!-- 숫자 입력: 기본값 0.7, 최소 0, 최대 1, 증감 단위 0.1 -->
+                    <input type="number" id="temperature" value="0.7" min="0" max="1" step="0.1">
+                </label>
+            </div>
+
+            <!-- 이미지 미리보기 영역 (기본 숨김, 동적으로 생성됨) -->
+            <div class="image-preview" id="imagePreview">
+                <!-- 여러 이미지 미리보기가 JavaScript로 동적으로 추가됩니다 -->
+            </div>
+
+            <!-- 입력 컨트롤 영역 -->
+            <div class="input-controls">
+                <!-- 입력 래퍼 -->
+                <div class="input-wrapper">
+                    <!-- 메시지 입력 필드 (Enter 키 입력 시 sendMessage 함수 호출) -->
+                    <input type="text" id="messageInput" placeholder="메시지를 입력하세요..."
+                           onkeypress="if(event.key==='Enter') sendMessage()">
+                    <!-- 파일 첨부 레이블 (imageInput 클릭 트리거) -->
+                    <label for="imageInput" class="file-input-label" title="이미지 첨부 (여러 개 선택 가능)"></label>
+                    <!-- 파일 입력 필드 (이미지만 허용, 여러 파일 선택 가능, 변경 시 previewImages 함수 호출) -->
+                    <input type="file" id="imageInput" accept="image/*" multiple onchange="previewImages(event)">
+                </div>
+                <!-- 전송 버튼 (sendMessage 함수 호출) -->
+                <button id="sendButton" onclick="sendMessage()">전송</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript 시작 -->
+    <script>
+        // ===== 서버 설정 =====
+        // 텍스트 전용 WebSocket 서버 주소
+        const CHATBOT_SERVER = 'http://220.69.155.225:24100';
+        // 이미지 + 텍스트 REST API 서버 주소 (Qwen3-VL 비전 모델)
+        const VISION_SERVER = 'http://220.69.155.225:24112';
+
+        // ===== 전역 변수 선언 =====
+        // WebSocket 연결 객체 (텍스트 챗봇용)
+        let ws = null;
+        // 세션 ID (사용자 세션 식별자)
+        let sessionId = null;
+        // 현재 선택된 이미지들 (Base64 형식 배열, 멀티 이미지 지원)
+        let currentImages = [];
+        // WebSocket 재연결 시도 횟수
+        let reconnectAttempts = 0;
+        // 최대 재연결 시도 횟수 상수
+        const MAX_RECONNECT_ATTEMPTS = 5;
+
+        // ===== DOM 요소 참조 =====
+        // 채팅 영역 요소 (메시지가 추가되는 곳)
+        const chatArea = document.getElementById('chatArea');
+        // 메시지 입력 필드 요소
+        const messageInput = document.getElementById('messageInput');
+        // 전송 버튼 요소
+        const sendButton = document.getElementById('sendButton');
+        // 상태 점 요소 (온라인/오프라인 표시)
+        const statusDot = document.getElementById('statusDot');
+        // 상태 텍스트 요소
+        const statusText = document.getElementById('statusText');
+
+        // ===== 페이지 로드 이벤트 =====
+        // 페이지가 완전히 로드되면 실행되는 함수
+        window.onload = function() {
+            // 텍스트 챗봇 서버에 세션 생성 요청
+            createSession();
+            // 비전 서버 상태 확인
+            checkVisionServer();
+        };
+
+        // ===== 세션 생성 함수 =====
+        // 텍스트 챗봇 서버에 새로운 세션을 생성하는 비동기 함수
+        async function createSession() {
+            try {
+                // POST 요청으로 세션 생성 API 호출
+                const response = await fetch(`${CHATBOT_SERVER}/session/create`, {
+                    method: 'POST'  // HTTP POST 메서드 사용
+                });
+                // 응답을 JSON으로 파싱
+                const data = await response.json();
+                // 세션 ID 저장
+                sessionId = data.session_id;
+                // WebSocket 연결 시작
+                connectWebSocket();
+            } catch (error) {
+                // 오류 발생 시 콘솔에 로그
+                console.error('세션 생성 실패:', error);
+                // 사용자에게 오류 메시지 표시
+                addMessage('system', '텍스트 챗봇 서버 연결 실패. 비전 기능만 사용 가능합니다.');
+            }
+        }
+
+        // ===== WebSocket 연결 함수 =====
+        // 텍스트 챗봇 서버와 WebSocket 연결을 설정하는 함수
+        function connectWebSocket() {
+            // WebSocket 객체 생성 (ws:// 프로토콜 사용)
+            ws = new WebSocket(`ws://220.69.155.225:24100/ws/${sessionId}`);
+
+            // WebSocket 연결 성공 이벤트 핸들러
+            ws.onopen = () => {
+                // 콘솔 로그 출력
+                console.log('WebSocket 연결됨');
+                // 재연결 시도 횟수 초기화
+                reconnectAttempts = 0;
+                // 텍스트 서버 연결 상태 업데이트 (온라인)
+                updateConnectionStatus(true, 'text');
+                // 입력 필드 활성화
+                messageInput.disabled = false;
+                // 전송 버튼 활성화
+                sendButton.disabled = false;
+            };
+
+            // WebSocket 메시지 수신 이벤트 핸들러
+            ws.onmessage = (event) => {
+                // 받은 데이터를 JSON으로 파싱
+                const data = JSON.parse(event.data);
+
+                // 메시지 타입별 처리
+                if (data.type === 'connection') {
+                    // 연결 확인 메시지 (콘솔 로그만)
+                    console.log('WebSocket 연결 확인:', data.message);
+                } else if (data.type === 'typing') {
+                    // AI가 타이핑 중임을 표시
+                    showTyping();
+                } else if (data.type === 'message') {
+                    // 타이핑 인디케이터 제거
+                    removeTyping();
+                    // AI 응답 메시지 추가 (텍스트 서버 배지 포함)
+                    addMessage('assistant', data.content, 'text');
+                } else if (data.type === 'error') {
+                    // 타이핑 인디케이터 제거
+                    removeTyping();
+                    // 오류 메시지 표시
+                    addMessage('system', '오류: ' + data.message);
+                }
+            };
+
+            // WebSocket 연결 종료 이벤트 핸들러
+            ws.onclose = () => {
+                // 콘솔 로그 출력
+                console.log('WebSocket 연결 끊김');
+                // 텍스트 서버 연결 상태 업데이트 (오프라인)
+                updateConnectionStatus(false, 'text');
+                // 재연결 시도
+                attemptReconnect();
+            };
+
+            // WebSocket 오류 이벤트 핸들러
+            ws.onerror = (error) => {
+                // 콘솔에 오류 로그 출력
+                console.error('WebSocket 오류:', error);
+            };
+        }
+
+        // ===== 재연결 시도 함수 =====
+        // WebSocket 연결이 끊어졌을 때 재연결을 시도하는 함수
+        function attemptReconnect() {
+            // 최대 재연결 시도 횟수 초과 확인
+            if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+                // 재연결 포기 메시지 표시
+                addMessage('system', '텍스트 챗봇 재연결 실패. 비전 기능은 계속 사용 가능합니다.');
+                return; // 함수 종료
+            }
+
+            // 재연결 시도 횟수 증가
+            reconnectAttempts++;
+            // 재연결 시도 중 메시지 표시
+            addMessage('system', `재연결 시도 중... (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`);
+            // 3초 후 재연결 시도
+            setTimeout(() => {
+                connectWebSocket();
+            }, 3000); // 3000ms = 3초
+        }
+
+        // ===== 비전 서버 상태 확인 함수 =====
+        // 비전 서버의 헬스 체크를 수행하는 비동기 함수
+        async function checkVisionServer() {
+            try {
+                // GET 요청으로 헬스 체크 API 호출
+                const response = await fetch(`${VISION_SERVER}/health`);
+                // 응답을 JSON으로 파싱
+                const data = await response.json();
+                // 모델이 로드되었는지 확인하여 상태 업데이트
+                updateConnectionStatus(data.model_loaded, 'vision');
+            } catch (error) {
+                // 오류 발생 시 콘솔 로그
+                console.error('비전 서버 확인 실패:', error);
+                // 비전 서버 오프라인으로 상태 업데이트
+                updateConnectionStatus(false, 'vision');
+            }
+        }
+
+        // ===== 연결 상태 업데이트 함수 =====
+        // 서버 연결 상태를 UI에 반영하는 함수
+        // connected: 연결 여부 (true/false)
+        // serverType: 서버 타입 ('text' 또는 'vision')
+        function updateConnectionStatus(connected, serverType) {
+            // 텍스트 서버 상태 업데이트
+            if (serverType === 'text') {
+                // 텍스트 배지 요소 가져오기
+                const badge = document.getElementById('textBadge');
+                // 연결 상태에 따라 배지 텍스트 변경
+                badge.textContent = connected ? '텍스트: 온라인' : '텍스트: 오프라인';
+                // 연결 상태에 따라 배지 배경색 변경 (초록색/회색)
+                badge.style.background = connected ? '#4caf50' : '#ccc';
+            }
+            // 비전 서버 상태 업데이트
+            else if (serverType === 'vision') {
+                // 비전 배지 요소 가져오기
+                const badge = document.getElementById('visionBadge');
+                // 연결 상태에 따라 배지 텍스트 변경
+                badge.textContent = connected ? '비전: 온라인' : '비전: 오프라인';
+                // 연결 상태에 따라 배지 배경색 변경 (파란색/회색)
+                badge.style.background = connected ? '#2196f3' : '#ccc';
+            }
+
+            // ===== 전체 상태 점 업데이트 =====
+            // 텍스트 배지에서 '온라인' 포함 여부 확인
+            const textOnline = document.getElementById('textBadge').textContent.includes('온라인');
+            // 비전 배지에서 '온라인' 포함 여부 확인
+            const visionOnline = document.getElementById('visionBadge').textContent.includes('온라인');
+
+            // 둘 중 하나라도 온라인이면
+            if (textOnline || visionOnline) {
+                // 상태 점에 'online' 클래스 추가 (초록색으로 변경)
+                statusDot.classList.add('online');
+                // 상태 텍스트를 '연결됨'으로 변경
+                statusText.textContent = '연결됨';
+            }
+            // 둘 다 오프라인이면
+            else {
+                // 상태 점에서 'online' 클래스 제거 (회색으로 변경)
+                statusDot.classList.remove('online');
+                // 상태 텍스트를 '연결 끊김'으로 변경
+                statusText.textContent = '연결 끊김';
+            }
+        }
+
+        // ===== 이미지 미리보기 함수 (멀티 이미지) =====
+        // 사용자가 여러 이미지 파일을 선택했을 때 미리보기를 표시하는 함수
+        // event: 파일 선택 이벤트 객체
+        function previewImages(event) {
+            // 선택된 파일들 가져오기 (FileList 객체)
+            const files = event.target.files;
+
+            // 파일이 선택되지 않았으면 종료
+            if (!files || files.length === 0) return;
+
+            // 기존 이미지 배열 초기화
+            currentImages = [];
+
+            // 미리보기 컨테이너 요소 가져오기
+            const previewContainer = document.getElementById('imagePreview');
+            // 미리보기 HTML 초기화
+            previewContainer.innerHTML = '';
+
+            // 각 파일을 순회하며 처리
+            Array.from(files).forEach((file, index) => {
+                // FileReader 객체 생성 (파일을 읽기 위한 객체)
+                const reader = new FileReader();
+
+                // 파일 읽기가 완료되었을 때 실행되는 콜백 함수
+                reader.onload = function(e) {
+                    // 읽은 이미지를 Base64 형식으로 배열에 추가
+                    currentImages.push(e.target.result);
+
+                    // 미리보기 아이템 컨테이너 생성
+                    const previewItem = document.createElement('div');
+                    previewItem.className = 'preview-container';
+                    previewItem.style.display = 'inline-block';
+                    previewItem.style.marginRight = '10px';
+                    previewItem.style.marginBottom = '10px';
+
+                    // 미리보기 이미지 생성
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'preview-image';
+                    img.alt = `미리보기 ${index + 1}`;
+
+                    // 제거 버튼 생성
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'remove-image';
+                    removeBtn.textContent = '×';
+                    removeBtn.onclick = function() {
+                        removeImage(index);
+                    };
+
+                    // 요소들을 조립
+                    previewItem.appendChild(img);
+                    previewItem.appendChild(removeBtn);
+                    previewContainer.appendChild(previewItem);
+
+                    // 미리보기 영역 표시
+                    previewContainer.classList.add('show');
+                };
+
+                // 파일을 Data URL(Base64) 형식으로 읽기 시작
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // ===== 이미지 제거 함수 =====
+        // 특정 인덱스의 이미지를 제거하거나 모든 이미지를 제거하는 함수
+        // index: 제거할 이미지 인덱스 (없으면 모두 제거)
+        function removeImage(index) {
+            if (index !== undefined) {
+                // 특정 이미지 제거
+                currentImages.splice(index, 1);
+
+                // 미리보기 재렌더링
+                const previewContainer = document.getElementById('imagePreview');
+                previewContainer.innerHTML = '';
+
+                if (currentImages.length === 0) {
+                    // 이미지가 없으면 미리보기 숨김
+                    previewContainer.classList.remove('show');
+                    document.getElementById('imageInput').value = '';
+                } else {
+                    // 남은 이미지들 다시 표시
+                    currentImages.forEach((imgData, idx) => {
+                        const previewItem = document.createElement('div');
+                        previewItem.className = 'preview-container';
+                        previewItem.style.display = 'inline-block';
+                        previewItem.style.marginRight = '10px';
+                        previewItem.style.marginBottom = '10px';
+
+                        const img = document.createElement('img');
+                        img.src = imgData;
+                        img.className = 'preview-image';
+                        img.alt = `미리보기 ${idx + 1}`;
+
+                        const removeBtn = document.createElement('button');
+                        removeBtn.className = 'remove-image';
+                        removeBtn.textContent = '×';
+                        removeBtn.onclick = function() {
+                            removeImage(idx);
+                        };
+
+                        previewItem.appendChild(img);
+                        previewItem.appendChild(removeBtn);
+                        previewContainer.appendChild(previewItem);
+                    });
+                }
+            } else {
+                // 모든 이미지 제거
+                currentImages = [];
+                document.getElementById('imageInput').value = '';
+                document.getElementById('imagePreview').classList.remove('show');
+                document.getElementById('imagePreview').innerHTML = '';
+            }
+        }
+
+        // ===== 메시지 추가 함수 =====
+        // 채팅 영역에 메시지를 추가하는 함수
+        // role: 메시지 역할 ('user', 'assistant', 'system')
+        // content: 메시지 내용
+        // serverType: 서버 타입 ('text', 'vision', null)
+        function addMessage(role, content, serverType = null) {
+            // 새로운 메시지 div 요소 생성
+            const messageDiv = document.createElement('div');
+            // 메시지에 클래스 추가 (예: 'message user', 'message assistant')
+            messageDiv.className = `message ${role}`;
+
+            // 현재 시간을 HH:MM 형식으로 가져오기
+            const now = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+
+            // 서버 배지 HTML 생성
+            let badge = '';
+            if (serverType === 'text') {
+                // 텍스트 서버 배지
+                badge = '<span class="server-badge badge-text">텍스트</span>';
+            } else if (serverType === 'vision') {
+                // 비전 서버 배지
+                badge = '<span class="server-badge badge-vision">비전 AI</span>';
+            }
+
+            // 역할에 따라 아바타 이모지 선택
+            // 삼항 연산자 중첩: role이 'user'면 , 'system'이면 ℹ️, 그 외(assistant)면 烙
+            const avatarEmoji = role === 'user' ? '' : (role === 'system' ? 'ℹ️' : '烙');
+
+            // 메시지 HTML 구조 설정
+            messageDiv.innerHTML = `
+                <div class="message-avatar">${avatarEmoji}</div>
+                <div class="message-content">
+                    <div class="message-bubble">${content}${badge}</div>
+                    <div class="message-time">${now}</div>
+                </div>
+            `;
+
+            // 채팅 영역에 메시지 추가
+            chatArea.appendChild(messageDiv);
+            // 스크롤을 맨 아래로 이동 (최신 메시지 표시)
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        // ===== 타이핑 인디케이터 표시 함수 =====
+        // AI가 응답을 생성 중임을 표시하는 애니메이션을 추가하는 함수
+        function showTyping() {
+            // 타이핑 인디케이터 div 요소 생성
+            const typingDiv = document.createElement('div');
+            // 클래스 추가 (assistant 메시지 스타일)
+            typingDiv.className = 'message assistant';
+            // ID 설정 (나중에 제거하기 위함)
+            typingDiv.id = 'typing-indicator';
+            // 타이핑 애니메이션 HTML 구조 설정
+            typingDiv.innerHTML = `
+                <div class="message-avatar">烙</div>
+                <div class="message-content">
+                    <div class="typing">
+                        <div class="typing-dots">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            // 채팅 영역에 타이핑 인디케이터 추가
+            chatArea.appendChild(typingDiv);
+            // 스크롤을 맨 아래로 이동
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        // ===== 타이핑 인디케이터 제거 함수 =====
+        // 타이핑 인디케이터를 DOM에서 제거하는 함수
+        function removeTyping() {
+            // ID로 타이핑 인디케이터 요소 찾기
+            const typingIndicator = document.getElementById('typing-indicator');
+            // 요소가 존재하면
+            if (typingIndicator) {
+                // DOM에서 제거
+                typingIndicator.remove();
+            }
+        }
+
+        // ===== 메시지 전송 함수 (조건부 라우팅) =====
+        // 사용자가 전송 버튼을 클릭하거나 Enter 키를 눌렀을 때 실행되는 비동기 함수
+        async function sendMessage() {
+            // 입력된 메시지를 가져와서 앞뒤 공백 제거
+            const message = messageInput.value.trim();
+
+            // 메시지와 이미지가 둘 다 없으면
+            if (!message && currentImages.length === 0) {
+                // 경고창 표시
+                alert('메시지나 이미지를 입력해주세요.');
+                return; // 함수 종료
+            }
+
+            // 전송 버튼 비활성화 (중복 전송 방지)
+            sendButton.disabled = true;
+
+            // ===== 조건부 라우팅 로직 =====
+            // 이미지가 있는 경우 → 비전 서버로 전송 (멀티 이미지 지원)
+            if (currentImages.length > 0) {
+                await sendToVisionServer(message, currentImages);
+            }
+            // 텍스트만 있는 경우 → 텍스트 챗봇 서버로 전송
+            else {
+                await sendToTextServer(message);
+            }
+
+            // 입력 필드 초기화
+            messageInput.value = '';
+            // 이미지 제거
+            removeImage();
+            // 전송 버튼 다시 활성화
+            sendButton.disabled = false;
+        }
+
+        // ===== 텍스트 서버 전송 함수 (WebSocket) =====
+        // 텍스트만 있는 메시지를 WebSocket으로 전송하는 비동기 함수
+        // message: 전송할 텍스트 메시지
+        async function sendToTextServer(message) {
+            // WebSocket이 연결되지 않았거나 연결 상태가 OPEN이 아니면
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                // 경고창 표시
+                alert('텍스트 챗봇 서버가 연결되지 않았습니다.');
+                return; // 함수 종료
+            }
+
+            // 사용자 메시지를 채팅 영역에 추가
+            addMessage('user', message);
+            // WebSocket으로 메시지 전송 (JSON 형식으로 직렬화)
+            ws.send(JSON.stringify({ message: message }));
+        }
+
+        // ===== 비전 서버 전송 함수 (REST API) - 멀티 이미지 지원 =====
+        // 이미지(들)와 텍스트를 REST API로 전송하는 비동기 함수
+        // text: 전송할 텍스트 메시지 (선택적)
+        // imagesBase64: Base64 인코딩된 이미지 배열
+        async function sendToVisionServer(text, imagesBase64) {
+            // 사용자 메시지를 채팅 영역에 추가 (텍스트가 없으면 기본 메시지)
+            addMessage('user', text || `(이미지 ${imagesBase64.length}개 분석 요청)`);
+
+            // ===== 이미지 미리보기를 사용자 메시지에 추가 (멀티 이미지 지원) =====
+            // 모든 사용자 메시지 요소 가져오기
+            const userMessages = chatArea.querySelectorAll('.message.user');
+            // 마지막 사용자 메시지 (방금 추가한 메시지)
+            const lastUserMessage = userMessages[userMessages.length - 1];
+            // 메시지 콘텐츠 영역 찾기
+            const messageContent = lastUserMessage.querySelector('.message-content');
+
+            // 각 이미지를 순회하며 메시지에 추가
+            imagesBase64.forEach((imageBase64, index) => {
+                // img 요소 생성
+                const img = document.createElement('img');
+                // 이미지 소스를 Base64 데이터로 설정
+                img.src = imageBase64;
+                // 이미지 클래스 추가 (스타일 적용)
+                img.className = 'message-image';
+                // 여러 이미지 간 간격 추가
+                img.style.marginRight = '5px';
+                img.style.marginBottom = '5px';
+                // 메시지 콘텐츠 맨 앞에 이미지 삽입
+                messageContent.insertBefore(img, messageContent.firstChild);
+            });
+
+            // 타이핑 인디케이터 표시
+            showTyping();
+
+            try {
+                // ===== 설정 값 가져오기 =====
+                // Max Tokens 값을 정수로 파싱
+                const maxTokens = parseInt(document.getElementById('maxTokens').value);
+                // Temperature 값을 실수로 파싱
+                const temperature = parseFloat(document.getElementById('temperature').value);
+
+                // ===== 이미지를 Base64 배열로 준비 (헤더 제거) =====
+                // "data:image/png;base64,iVBORw0KG..." -> "iVBORw0KG..."
+                const imagesBase64Clean = imagesBase64.map(img => img.split(',')[1]);
+
+                // ===== REST API 요청 =====
+                // POST 요청으로 비전 서버에 데이터 전송
+                const response = await fetch(`${VISION_SERVER}/chat`, {
+                    method: 'POST',  // HTTP POST 메서드
+                    headers: {
+                        'Content-Type': 'application/json'  // JSON 형식으로 전송
+                    },
+                    body: JSON.stringify({
+                        text: text || `이 ${imagesBase64.length}개의 이미지를 설명해줘`,  // 텍스트 (없으면 기본 메시지)
+                        images_base64: imagesBase64Clean,  // Base64 이미지 배열 (멀티 이미지)
+                        max_tokens: maxTokens,      // 최대 토큰 수
+                        temperature: temperature    // 생성 온도
+                    })
+                });
+
+                // 타이핑 인디케이터 제거
+                removeTyping();
+
+                // ===== 응답 처리 =====
+                // 응답이 성공적이면 (HTTP 200-299)
+                if (response.ok) {
+                    // 응답을 JSON으로 파싱
+                    const data = await response.json();
+                    // AI 응답을 채팅 영역에 추가 (비전 배지 포함)
+                    addMessage('assistant', data.response, 'vision');
+                }
+                // 응답이 오류면
+                else {
+                    // 오류 응답을 JSON으로 파싱
+                    const error = await response.json();
+                    // 오류 메시지를 시스템 메시지로 표시
+                    addMessage('system', `비전 서버 오류: ${error.detail || '알 수 없는 오류'}`);
+                }
+            } catch (error) {
+                // 네트워크 오류 등 예외 발생 시
+                // 타이핑 인디케이터 제거
+                removeTyping();
+                // 오류 메시지를 시스템 메시지로 표시
+                addMessage('system', `네트워크 오류: ${error.message}`);
+            }
+        }
+
+        // ===== 페이지 종료 이벤트 리스너 =====
+        // 사용자가 페이지를 떠날 때 WebSocket 연결을 정리하는 함수
+        window.addEventListener('beforeunload', () => {
+            // WebSocket이 존재하면
+            if (ws) {
+                // WebSocket 연결 종료
+                ws.close();
+            }
+        });
+
+        // ===== 비전 서버 주기적 상태 확인 =====
+        // 5초(5000ms)마다 비전 서버 상태를 확인하는 타이머 설정
+        setInterval(checkVisionServer, 5000);
+    </script>
+    <!-- JavaScript 종료 -->
+</body>
+<!-- body 종료 -->
+</html>
+<!-- HTML 종료 -->
+
